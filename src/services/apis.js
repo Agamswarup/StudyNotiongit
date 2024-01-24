@@ -21,6 +21,7 @@ export const studentEndpoints = {
   COURSE_PAYMENT_API: BASE_URL + "/payment/capturePayment",
   COURSE_VERIFY_API: BASE_URL + "/payment/verifyPayment",
   SEND_PAYMENT_SUCCESS_EMAIL_API: BASE_URL + "/payment/sendPaymentSuccessEmail",
+  COURSE_PURCHASE_DIRECTLY: BASE_URL + "/payment/purchaseDirectly"
 }
 
 // COURSE ENDPOINTS
@@ -60,7 +61,7 @@ export const catalogData = {
 }
 // CONTACT-US API
 export const contactusEndpoint = {
-  CONTACT_US_API: BASE_URL + "/reach/contact",
+  CONTACT_US_API: BASE_URL + "/contact/contact-us",
 }
 
 // SETTINGS PAGE API

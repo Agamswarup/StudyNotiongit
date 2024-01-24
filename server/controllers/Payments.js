@@ -167,6 +167,106 @@ exports.sendPaymentSuccessEmail = async(req, res) => {
     }
 }
 
+exports.purchaseDirectly = async (req, res) => {
+    const { courseId, courses } = req.body
+    const userId = req.user.id
+    
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please Login first" })
+    }
+  
+    if(!courseId && courses){
+      //check whether courses is an array or not
+      if(Array.isArray(courses)){
+        for(let index = 0; index<courses.length; index++){
+          try{
+            //Find the course and enroll the student in it
+            const enrolledCourse = await Course.findOneAndUpdate({_id:courses[index]}, {$push:{studentsEnrolled:userId}}, {new:true});
+            if(!enrolledCourse){
+              return res.status(500).json({
+                success:false,
+                error:"Course not found"
+              });
+            }
+            console.log("Updated course: ", enrolledCourse);
+  
+            const courseProgress = await CourseProgress.create({
+              courseID:courses[index],
+              userId:userId,
+              completedVideos:[],
+            });
+            //Find the student and add the course to their list of enrolled courses
+            const enrolledStudent = await User.findByIdAndUpdate(userId, {$push:{courses:courses[index], courseProgress:courseProgress._id}}, {new:true});
+            console.log("Updated student: ", enrolledStudent);
+  
+            //Send an email notification to the enrolled student
+            await mailSender(enrolledStudent.email, `Successfully Enrolled into ${enrolledCourse.courseName}`, courseEnrollmentEmail(enrolledCourse.courseName, `${enrolledStudent.firstName} ${enrolledStudent.lastName}`));
+          } catch(error){
+            console.log(error);
+            return res.status(400).json({
+              success:false,
+              error:error.message
+            });
+          }
+        }
+        return res.status(200).json({ success: true, message: "Student Enrolled" })
+      }
+      else{
+        return res.status(400).json({ success: false, message: "Please provide courseIds" })
+      }
+    }
+  
+    try {
+      // Find the course and enroll the student in it
+      const enrolledCourse = await Course.findOneAndUpdate(
+        { _id: courseId },
+        { $push: { studentsEnrolled: userId } },
+        { new: true }
+      )
+  
+      if (!enrolledCourse) {
+        return res
+          .status(500)
+          .json({ success: false, error: "Course not found" })
+      }
+      console.log("Updated course: ", enrolledCourse)
+  
+      const courseProgress = await CourseProgress.create({
+        courseID: courseId,
+        userId: userId,
+        completedVideos: [],
+      })
+      // Find the student and add the course to their list of enrolled courses
+      const enrolledStudent = await User.findByIdAndUpdate(
+        userId,
+        {
+          $push: {
+            courses: courseId,
+            courseProgress: courseProgress._id,
+          },
+        },
+        { new: true }
+      )
+  
+      // Send an email notification to the enrolled student
+      await mailSender(
+        enrolledStudent.email,
+        `Successfully Enrolled into ${enrolledCourse.courseName}`,
+        courseEnrollmentEmail(
+          enrolledCourse.courseName,
+          `${enrolledStudent.firstName} ${enrolledStudent.lastName}`
+        )
+      )
+      return res.status(200).json({ success: true, message: "Student Enrolled" })
+    } catch (error) {
+      console.log(error)
+      return res.status(400).json({ success: false, error: error.message })
+    }
+  
+  }
+
 
 // //capture the payment and initiate the Razorpay order
 // exports.capturePayment = async (req, res) => {

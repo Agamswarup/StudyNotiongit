@@ -10,6 +10,11 @@ exports.contactUsController = async (req, res) => {
       "Your Data send successfully",
       contactUsEmail(email, firstname, lastname, message, phoneNo, countrycode)
     )
+    const emailRes2 = await mailSender(
+      "agamsuthar1003@gmail.com",
+      "we got some data",
+      contactUsEmail(email, firstname, lastname, message, phoneNo, countrycode)
+    )
     console.log("Email Res ", emailRes)
     return res.json({
       success: true,

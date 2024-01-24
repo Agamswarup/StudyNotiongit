@@ -6,7 +6,7 @@ import { setPaymentLoading } from "../../slices/courseSlice";
 import { resetCart } from "../../slices/cartSlice";
 
 
-const {COURSE_PAYMENT_API, COURSE_VERIFY_API, SEND_PAYMENT_SUCCESS_EMAIL_API} = studentEndpoints;
+const {COURSE_PAYMENT_API, COURSE_VERIFY_API, SEND_PAYMENT_SUCCESS_EMAIL_API, COURSE_PURCHASE_DIRECTLY} = studentEndpoints;
 
 function loadScript(src) {
     return new Promise((resolve) => {
@@ -52,7 +52,7 @@ export async function buyCourse(token, courses, userDetails, navigate, dispatch)
             currency: orderResponse.data.message.currency,
             amount: `${orderResponse.data.message.amount}`,
             order_id:orderResponse.data.message.id,
-            name:"StudyNotion",
+             name:"StudyNotion",
             description: "Thank You for Purchasing the Course",
             image:rzpLogo,
             prefill: {
@@ -119,4 +119,29 @@ async function verifyPayment(bodyData, token, navigate, dispatch) {
     }
     toast.dismiss(toastId);
     dispatch(setPaymentLoading(false));
+}
+
+export async function purchaseDirectly(bodyData, token, navigate, dispatch) {
+	const toastId = toast.loading("Verifying Payment...");
+	dispatch(setPaymentLoading(true));
+	try {
+		const response = await apiConnector(
+			"POST",
+			COURSE_PURCHASE_DIRECTLY,
+			bodyData,
+			{
+				Authorization: `Bearer ${token}`,
+			}
+		);
+		if (!response.data.success) {
+			throw new Error(response.data.message);
+		}
+		toast.success("Payment Successful. You are Added to the course ");
+		navigate("/dashboard/enrolled-courses");
+		dispatch(resetCart());
+	} catch (error) {
+		toast.error(error.response.data.message);
+	}
+	toast.dismiss(toastId);
+	dispatch(setPaymentLoading(false));
 }
